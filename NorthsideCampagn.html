@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incubation Has 5 Stages | NorthSide</title>
+    <style>
+        :root {
+            --accent: rgb(90, 189, 186);
+            --bg: #ffffff;
+            --text: #111111;
+            --gray-light: #f5f5f5;
+            --gray-med: #e0e0e0;
+            --transition-speed: 0.6s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Layout */
+        #app {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .screen.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            background: var(--text);
+            color: var(--bg);
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--text);
+            color: var(--text);
+        }
+
+        /* Questions */
+        .options-container {
+            display: grid;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .option {
+            border: 1px solid var(--gray-med);
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option:hover {
+            border-color: var(--accent);
+        }
+
+        .option.selected {
+            border-color: var(--accent);
+            background-color: rgba(90, 189, 186, 0.05);
+        }
+
+        .option input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gray-light);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Results Visualization */
+        .stage-viz {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin: 2rem 0;
+            height: 60px;
+        }
+
+        .viz-block {
+            background: var(--gray-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #ccc;
+            border-radius: 2px;
+            transition: all 0.5s ease;
+        }
+
+        .viz-block.stuck {
+            background: var(--accent);
+            color: white;
+            transform: scaleY(1.1);
+        }
+
+        .viz-block.strongest {
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            background: white;
+        }
+
+        .viz-labels {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            text-align: center;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #999;
+        }
+
+        /* Flip Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            height: 200px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            border: 1px solid var(--gray-med);
+            border-radius: 4px;
+        }
+
+        .card-front {
+            background-color: var(--gray-light);
+        }
+
+        .card-back {
+            background-color: var(--bg);
+            transform: rotateY(180deg);
+            border-color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            color: #888;
+        }
+
+        .card-main {
+            font-weight: 500;
+        }
+
+        /* Utils */
+        .mt-4 { margin-top: 4rem; }
+        .mb-2 { margin-bottom: 2rem; }
+        .text-center { text-align: center; }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .subtitle { font-size: 1.1rem; }
+            .cards-grid { grid-template-columns: 1fr; height: auto; }
+            .card-container { height: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="app">
+        <!-- Screens will be injected here via JS or pre-defined -->
+        
+        <!-- 1. Entry Screen -->
+        <div class="screen active" id="screen-entry">
+            <h1>Incubation has 5 stages.</h1>
+            <p class="subtitle">This isn’t a framework. It’s a real incubation.</p>
+            <button class="btn" onclick="nextScreen()">Step into the incubation</button>
+        </div>
+
+        <!-- 2. Orientation Screen -->
+        <div class="screen" id="screen-orientation">
+            <p class="subtitle">This experience takes about 3 minutes.</p>
+            <p>No email. No pitch. Just clarity.</p>
+            <button class="btn" onclick="nextScreen()">Begin</button>
+        </div>
+
+        <!-- Dynamic Question/Intro Screens will be handled by showStep() -->
+        <div id="dynamic-content"></div>
+
+        <!-- 18. Results Screen -->
+        <div class="screen" id="screen-results">
+            <h2>The Diagnosis</h2>
+            <h1 id="diagnosis-text">You’re currently stuck at Stage X: Name</h1>
+            <p>This is a common friction point for growing ventures.</p>
+
+            <div class="mt-4">
+                <p><strong>Where you’re stuck</strong></p>
+                <div class="stage-viz" id="stuck-viz"></div>
+                <div class="viz-labels">
+                    <div>Decode</div>
+                    <div>Distill</div>
+                    <div>Define</div>
+                    <div>Design</div>
+                    <div>Deploy</div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p><strong>Where you’re strongest</strong></p>
+                <div class="stage-viz" id="strongest-viz"></div>
+                <div class="viz-labels">
+                    <div>Decode</div>
+                    <div>Distill</div>
+                    <div>Define</div>
+                    <div>Design</div>
+                    <div>Deploy</div>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-title">Problem</div>
+                            <div class="card-main">Why this happens</div>
+                        </div>
+                        <div class="card-back" id="card-why">Content</div>
+                    </div>
+                </div>
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-title">Impact</div>
+                            <div class="card-main">What it’s costing you</div>
+                        </div>
+                        <div class="card-back" id="card-cost">Content</div>
+                    </div>
+                </div>
+                <div class="card-container" onclick="this.classList.toggle('flipped')">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-title">Solution</div>
+                            <div class="card-main">What unlocks this</div>
+                        </div>
+                        <div class="card-back" id="card-unlock">Content</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p>If you’d like to explore how this stage is addressed during real incubations, you can continue here.</p>
+                <a href="https://northside.co.in/" target="_blank" class="btn btn-outline">Visit NorthSide</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stages = [
+            {
+                name: "Decode",
+                intro: "Understanding the real problem, the market context, and why customers behave the way they do.",
+                expectation: "Answer the next two questions based on your current reality.",
+                questions: [
+                    "How clearly have you defined the core problem your venture is solving?",
+                    "How well do you understand why customers choose you today?"
+                ],
+                why: "Happens when decisions are driven by assumptions",
+                cost: "Leads to misaligned strategy",
+                unlock: "Unlocks through deep market understanding"
+            },
+            {
+                name: "Distill",
+                intro: "Turning insight into focus by choosing what truly matters.",
+                expectation: "Answer the next two questions honestly.",
+                questions: [
+                    "How defined is your primary target audience?",
+                    "How intentional is your focus on a specific use case or occasion?"
+                ],
+                why: "Happens when focus is spread too wide",
+                cost: "Leads to weak resonance",
+                unlock: "Unlocks through clear prioritisation"
+            },
+            {
+                name: "Define",
+                intro: "Clarifying who you are for, why you matter, and what makes you different.",
+                expectation: "Answer based on how clearly this is articulated today.",
+                questions: [
+                    "How easy is it to explain what makes your venture different?",
+                    "How consistent is your core message across touchpoints?"
+                ],
+                why: "Happens when positioning isn’t sharp",
+                cost: "Leads to confusion internally and externally",
+                unlock: "Unlocks through strategic clarity"
+            },
+            {
+                name: "Design",
+                intro: "Expressing strategy through visual and verbal identity.",
+                expectation: "Answer based on how aligned your brand feels.",
+                questions: [
+                    "How well does your brand expression reflect your strategy?",
+                    "How confident are you in your brand’s visual and verbal identity?"
+                ],
+                why: "Happens when expression and strategy drift",
+                cost: "Leads to erosion of trust",
+                unlock: "Unlocks through intentional identity systems"
+            },
+            {
+                name: "Deploy",
+                intro: "Executing with focus and intention in the market.",
+                expectation: "Answer based on how predictable your growth feels.",
+                questions: [
+                    "How focused is your go-to-market execution?",
+                    "How predictable is your growth today?"
+                ],
+                why: "Happens when execution lacks focus",
+                cost: "Leads to unpredictable growth",
+                unlock: "Unlocks through disciplined go-to-market execution"
+            }
+        ];
+
+        const optionLabels = [
+            { text: "Very clear and intentional", score: 4 },
+            { text: "Mostly clear, some gaps", score: 3 },
+            { text: "Unclear or inconsistent", score: 2 },
+            { text: "Not defined yet", score: 1 }
+        ];
+
+        let currentStep = 0; // 0: Entry, 1: Orientation, 2...: Stages
+        let responses = new Array(10).fill(0);
+        const dynamicContent = document.getElementById('dynamic-content');
+        const progressBar = document.getElementById('progressBar');
+
+        function nextScreen() {
+            const currentActive = document.querySelector('.screen.active');
+            currentActive.style.opacity = '0';
+            
+            setTimeout(() => {
+                currentActive.classList.remove('active');
+                currentStep++;
+                renderStep();
+            }, 300);
+        }
+
+        function renderStep() {
+            // Steps 0 and 1 are static HTML
+            if (currentStep === 0) return;
+            if (currentStep === 1) {
+                document.getElementById('screen-orientation').classList.add('active');
+                setTimeout(() => document.getElementById('screen-orientation').style.opacity = '1', 50);
+                updateProgress(5);
+                return;
+            }
+
+            // Calculate current stage and sub-step (intro, Q1, Q2)
+            // Stage 1 Intro is step 2, Q1 is step 3, Q2 is step 4
+            // Stage 2 Intro is step 5, Q3 is step 6, Q4 is step 7 ...
+            
+            const linearIndex = currentStep - 2;
+            const stageIndex = Math.floor(linearIndex / 3);
+            const subStep = linearIndex % 3; // 0: Intro, 1: Q1, 2: Q2
+
+            if (stageIndex >= stages.length) {
+                calculateResults();
+                return;
+            }
+
+            const stage = stages[stageIndex];
+            let html = '';
+
+            if (subStep === 0) {
+                // Intro Screen
+                html = `
+                    <div class="screen active" style="opacity:0">
+                        <h2>Stage 0${stageIndex + 1}</h2>
+                        <h1>${stage.name}</h1>
+                        <p class="subtitle">${stage.intro}</p>
+                        <p><em>${stage.expectation}</em></p>
+                        <button class="btn" onclick="nextScreen()">Continue</button>
+                    </div>
+                `;
+            } else {
+                // Question Screen
+                const qNum = stageIndex * 2 + (subStep - 1);
+                const questionText = stage.questions[subStep - 1];
+                html = `
+                    <div class="screen active" style="opacity:0">
+                        <h2>Question 0${qNum + 1}</h2>
+                        <p class="subtitle">${questionText}</p>
+                        <div class="options-container">
+                            ${optionLabels.map((opt, i) => `
+                                <div class="option" onclick="handleSelect(${qNum}, ${opt.score}, this)">
+                                    ${opt.text}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            dynamicContent.innerHTML = html;
+            const newScreen = dynamicContent.querySelector('.screen');
+            setTimeout(() => newScreen.style.opacity = '1', 50);
+            updateProgress(((currentStep) / 18) * 100);
+        }
+
+        function handleSelect(questionIdx, score, element) {
+            responses[questionIdx] = score;
+            const options = element.parentElement.querySelectorAll('.option');
+            options.forEach(o => o.classList.remove('selected'));
+            element.classList.add('selected');
+
+            // Small delay for feedback before advancing
+            setTimeout(() => {
+                nextScreen();
+            }, 400);
+        }
+
+        function updateProgress(pct) {
+            progressBar.style.width = pct + '%';
+        }
+
+        function calculateResults() {
+            const stageScores = [];
+            for (let i = 0; i < 5; i++) {
+                stageScores.push(responses[i * 2] + responses[i * 2 + 1]);
+            }
+
+            // Find Stuck (Lowest). Earlier stage wins.
+            let minScore = Math.min(...stageScores);
+            let stuckIndex = stageScores.indexOf(minScore);
+
+            // Find Strongest (Highest). Earlier stage wins.
+            let maxScore = Math.max(...stageScores);
+            let strongestIndex = stageScores.indexOf(maxScore);
+
+            const stuckStage = stages[stuckIndex];
+
+            // Update UI
+            document.getElementById('diagnosis-text').innerText = `You’re currently stuck at Stage ${stuckIndex + 1}: ${stuckStage.name}`;
+            
+            // Cards
+            document.getElementById('card-why').innerText = stuckStage.why;
+            document.getElementById('card-cost').innerText = stuckStage.cost;
+            document.getElementById('card-unlock').innerText = stuckStage.unlock;
+
+            // Visuals
+            renderViz('stuck-viz', stuckIndex, 'stuck');
+            renderViz('strongest-viz', strongestIndex, 'strongest');
+
+            document.getElementById('screen-results').classList.add('active');
+            setTimeout(() => document.getElementById('screen-results').style.opacity = '1', 50);
+            updateProgress(100);
+        }
+
+        function renderViz(containerId, activeIdx, className) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const block = document.createElement('div');
+                block.className = 'viz-block';
+                if (i === activeIdx) {
+                    block.classList.add(className);
+                    block.innerText = (className === 'stuck' ? 'Stuck' : 'Strong');
+                } else {
+                    block.innerText = '•';
+                }
+                container.appendChild(block);
+            }
+        }
+    </script>
+</body>
+</html>
